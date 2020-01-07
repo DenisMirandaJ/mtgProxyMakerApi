@@ -1,0 +1,16 @@
+{
+  "name": "mtgproxymakerapi",
+  "version": "0.0.1",
+  "description": "REst api for the mtgProxyMaker App",
+  "main": "src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Denis Miranda",
+  "license": "MIT",
+  "dependencies": {
+    "esm": "^3.2.25",
+    "express": "^4.17.1",
+    "mongodb": "^3.4.1"
+  }
+}
