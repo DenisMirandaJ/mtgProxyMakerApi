@@ -17,7 +17,6 @@ export class Controller {
      */
     async getCardsJsonByName(req, res) {
         let response = await this.requestHandler.getCardJsonByName(req.params.cardName)
-        console.log(response)
         return res.status(200).json(response)
     }
 }
