@@ -161,7 +161,7 @@ class DeckImageCreator:
 
 
 if __name__ == '__main__':
-    jsonData = open(sys.argv[1]).read()
+    jsonData = open(sys.argv[1], encoding="utf8").read()
     if (sys.argv[2] == 'img'):
         mtg = DeckImageCreator()
         mtg.createDeckImage(jsonData)
