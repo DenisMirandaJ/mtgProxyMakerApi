@@ -24,6 +24,7 @@ class CardData:
             self.id = cardData['cardJson']['id']
             self.imageUrl = cardData['cardJson']['image_uris']['png']
             self.quantity = int(cardData['quantity'])
+            self.backFaceImageUrl = ''
             self.isDoubleFaced = False
         except KeyError:
             self.name = cardData['cardJson']['name']
@@ -34,7 +35,7 @@ class CardData:
             self.isDoubleFaced = True
 
     def __str__(self):
-        print([self.imageUrl, self.backFaceImageUrl,
+        return str([self.imageUrl, self.backFaceImageUrl,
                self.isDoubleFaced, self.quantity])
 
 
@@ -88,7 +89,7 @@ class DeckImageCreator:
 
     @ratelimits(calls=1, period=0.1)
     def requestImage(self, url, id, cache=True):
-        if (self.checkForImageInCache(id)):
+        if (self.checkForImageInCache(id) and cache):
             return self.retrieveImageInCache(id)
         image = Image.open(io.BytesIO(urllib.request.urlopen(url).read()))
         if (cache):
@@ -116,7 +117,6 @@ class DeckImageCreator:
                 position = calculateNextPosition(position, canvas.size[0])
                 canvas.paste(backFaceImage, position)
                 position = calculateNextPosition(position, canvas.size[0])
-
         else:
             position = lastPosition
             image = self.retrieveImage(card.imageUrl, card.id)
@@ -158,10 +158,13 @@ class DeckImageCreator:
             canvas.save(deckFile, dpi=(self.ppi, self.ppi))
         print(deckId)
         sys.stdout.flush()
-
+    
 
 if __name__ == '__main__':
     jsonData = open(sys.argv[1], encoding="utf8").read()
+    mtg = DeckImageCreator()
     if (sys.argv[2] == 'img'):
-        mtg = DeckImageCreator()
         mtg.createDeckImage(jsonData)
+    elif (sys.argv[2] == 'pdf'):
+        mtg.createDeckPdf(jsonData, 'letter')
+
