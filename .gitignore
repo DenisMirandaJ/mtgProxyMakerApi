@@ -109,3 +109,7 @@ dist
 
 #python 
 *.pyc
+
+#cache images
+*.png
+*.deck

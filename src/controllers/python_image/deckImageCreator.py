@@ -28,8 +28,8 @@ class CardData:
         except KeyError:
             self.name = cardData['cardJson']['name']
             self.id = cardData['cardJson']['id']
-            self.imageUrl = cardData['cardsJson']['card_faces'][0]['image_uris']['png']
-            self.backFaceImageUrl = cardData['cardsJson']['card_faces'][1]['image_uris']['png']
+            self.imageUrl = cardData['cardJson']['card_faces'][0]['image_uris']['png']
+            self.backFaceImageUrl = cardData['cardJson']['card_faces'][1]['image_uris']['png']
             self.quantity = int(cardData['quantity'])
             self.isDoubleFaced = True
 
