@@ -32,6 +32,15 @@ export class Controller {
         res.status(400).send('File Not Found')
     }
 
+    async downloadPDFFile(req, res) {
+        let uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        let match = req.params.deckfilename.match(uuidRegex)
+        if (match) {
+            return res.download('./python_image/decks/' + req.params.deckfilename + '.pdf')
+        }
+        res.status(400).send('File Not Found')
+    }
+
     async callPythonDeckBuilder(req, res) {
         const fs = require('fs');
         let deckDataId = uuid4()
@@ -47,11 +56,24 @@ export class Controller {
                 return console.log(err);
             }
         })
-        var options = { 
-            args: [
-                filename,
-                'img'
-            ] 
+
+        let options = {}
+
+        if (req.body.filetype === 'img') {
+            var options = {
+                args: [
+                    filename,
+                    'img'
+                ]
+            }
+        } else if (req.body.filetype === 'pdf') {
+            var options = {
+                args: [
+                    filename,
+                    'pdf',
+                    req.body.paperSize
+                ]
+            }
         }
         PythonShell.run('./src/controllers/python_image/deckImageCreator.py', options, function (err, data) {
             if (err) {

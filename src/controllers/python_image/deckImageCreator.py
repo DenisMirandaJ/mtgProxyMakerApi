@@ -9,6 +9,7 @@ import urllib.request
 from time import sleep
 from ratelimit import limits as ratelimits
 import sys
+import numpy as np
 
 
 class CardData:
@@ -48,6 +49,18 @@ class DeckImageCreator:
     columns = 0
     maxPrintWidth = 0
     pixelsBetweenCards = 0
+
+    #paper pages properties, all measurements are in pixels relative to 300ppi
+    pdfPageData = {
+        #pageSize, cardsPerPage, paddingLeft, paddingTop, spacceBetween cards
+        'letter': {
+            'pageSize': (2554, 3299), 
+            'cardsPerPage': 9,
+            'paddingTop': 100,
+            'paddingLeft': 50,
+            'spacing': 10
+        },
+    }
 
     storageFolder = './python_image/'
 
@@ -96,6 +109,76 @@ class DeckImageCreator:
             self.storeImageInCache(image, id)
         return image
 
+    def pasteCardOnPdfPages(self, canvasSize, cards, cardsPerPage, paddingLeft, paddingTop, offset):
+        def calculateNextPosition(lastPosition, canvasWidth):
+            offsetX = self.cardImageWidth + self.pixelsBetweenCards
+            offsetY = self.cardImageHeight + self.pixelsBetweenCards
+            nextPosition = (lastPosition[0] + offsetX, lastPosition[1])
+            if nextPosition[0] + offsetX > canvasWidth:
+                nextPosition = (paddingLeft,
+                                lastPosition[1] + offsetY)
+            return nextPosition
+        
+        if not os.path.exists(self.storageFolder + '/decks'):
+            os.makedirs(self.storageFolder + 'decks')        
+        pages = []
+        canvas = Image.new('RGBA', canvasSize, (255, 255, 255))
+        position = (paddingLeft, paddingTop)
+        c = 0
+        for card in cards:    
+            if (card.isDoubleFaced):
+                frontFaceimage = self.retrieveImage(card.imageUrl, card.id)
+                backFaceImage = self.retrieveImage(card.backFaceImageUrl, card.id, cache=False)
+                for j in range(card.quantity):
+                    if c >= cardsPerPage:
+                        pages.append(canvas)
+                        c = 0
+                        canvas = Image.new('RGBA', canvasSize, (255, 255, 255))
+                        position = (paddingLeft, paddingTop)
+                        canvas.paste(frontFaceimage, position)
+                        position = calculateNextPosition(position, canvasSize[0])
+                        c += 1
+                    else:
+                        canvas.paste(frontFaceimage, position)
+                        position = calculateNextPosition(position, canvas.size[0])
+                        c+=1
+                    if c >= cardsPerPage:
+                        pages.append(canvas)
+                        c = 0
+                        canvas = Image.new('RGBA', canvasSize, (255, 255, 255))
+                        position = (paddingLeft, paddingTop)
+                        canvas.paste(backFaceImage, position)
+                        position = calculateNextPosition(position, canvasSize[0])
+                        c += 1
+                    else:
+                        canvas.paste(backFaceImage, position)
+                        position = calculateNextPosition(position, canvas.size[0])
+                        c+=1
+            else:
+                image = self.retrieveImage(card.imageUrl, card.id)
+                for j in range(card.quantity):
+                    if c >= cardsPerPage:
+                        pages.append(canvas)
+                        c = 0
+                        canvas = Image.new('RGBA', canvasSize, (255, 255, 255))
+                        position = (paddingLeft, paddingTop)
+                        canvas.paste(image, position)
+                        position = calculateNextPosition(position, canvasSize[0])
+                        c += 1
+                    else:
+                        canvas.paste(image, position)
+                        position = calculateNextPosition(position, canvas.size[0])
+                        c+=1
+        if c != cardsPerPage:
+            pages.append(canvas)
+        RGB_pages = [page.convert('RGB') for page in pages]
+        deckId = str(uuid.uuid4())
+        deckFile = self.storageFolder + 'decks/' + deckId + '.pdf'
+        print(RGB_pages[1:])
+        RGB_pages[0].save(deckFile, save_all=True, append_images = RGB_pages[1:], resolution = self.ppi)
+        print(deckId)
+        sys.stdout.flush()
+        
     def pasteCardOnCanvas(self, canvas, card, lastPosition):
 
         def calculateNextPosition(lastPosition, canvasWidth):
@@ -166,5 +249,10 @@ if __name__ == '__main__':
     if (sys.argv[2] == 'img'):
         mtg.createDeckImage(jsonData)
     elif (sys.argv[2] == 'pdf'):
-        mtg.createDeckPdf(jsonData, 'letter')
+        pageSize = mtg.pdfPageData[sys.argv[3]]['pageSize']
+        cardsPerPage = mtg.pdfPageData[sys.argv[3]]['cardsPerPage']
+        paddingLeft = mtg.pdfPageData[sys.argv[3]]['paddingLeft']
+        paddingTop = mtg.pdfPageData[sys.argv[3]]['paddingTop']
+        spacing = mtg.pdfPageData[sys.argv[3]]['spacing']
+        mtg.pasteCardOnPdfPages(pageSize, mtg.loadJsonData(jsonData), cardsPerPage, paddingLeft, paddingTop, spacing)
 
