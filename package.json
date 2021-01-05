@@ -9,7 +9,7 @@
   "author": "Denis Miranda",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.1",
+    "axios": "^0.21.1",
     "axios-rate-limit": "^1.2.1",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
